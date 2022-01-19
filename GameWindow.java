@@ -1,5 +1,6 @@
 package memorygame_desktopedition;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,11 +11,14 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 public class GameWindow extends javax.swing.JFrame {
 
+    static Connection connection = null;
     int shown = 0;
-    int theme = 1;
+    static int theme = 1;
     int score = 0;
     boolean start = true;
     JLabel first = null;
@@ -24,6 +28,8 @@ public class GameWindow extends javax.swing.JFrame {
     ArrayList<Integer> correct = new ArrayList<>();
     ArrayList<JLabel> labels = new ArrayList<>();
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    long finalTime = 0L;
+    String name = "";
 
     public GameWindow() {
         initComponents();
@@ -549,22 +555,6 @@ public class GameWindow extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void print(String s) {
-        System.out.println(s);
-    }
-
-    private void print(int i) {
-        System.out.println(String.valueOf(i));
-    }
-
-    private void print(long l) {
-        System.out.println(String.valueOf(l));
-    }
-
-    private void print(double d) {
-        System.out.println(String.valueOf(d));
-    }
-
     private void InitializeBools() {
         for (int i = 0; i < 36; i++) {
             bools.put(i + 1, false);
@@ -608,7 +598,6 @@ public class GameWindow extends javax.swing.JFrame {
         labels.add(button34);
         labels.add(button35);
         labels.add(button36);
-
     }
 
     private void ShuffleImages() {
@@ -792,6 +781,8 @@ public class GameWindow extends javax.swing.JFrame {
     }
 
     private void HandleSameClicked() {
+        first.setEnabled(false);
+        second.setEnabled(false);
         first = null;
         second = null;
         for (int i = 1; i < bools.size() + 1; i++) {
@@ -833,18 +824,19 @@ public class GameWindow extends javax.swing.JFrame {
     }
 
     private void StartGameTimer() {
-
-        final long start = System.currentTimeMillis();
+        final long begin = System.currentTimeMillis();
         final Runnable runnable = new Runnable() {
+            @Override
             public void run() {
                 long now = System.currentTimeMillis();
-                long min = (now - start) / 60000;
-                long sec = ((now - start) / 1000) % 60;
-                long ms = ((now - start) / 100) % 10;
+                finalTime = now - begin;
+                long min = (now - begin) / 60000;
+                long sec = ((now - begin) / 1000) % 60;
+                long ms = ((now - begin) % 1000);
                 TimeLabel.setText("Time: " + String.format("%02d", min) + "; " + String.format("%02d", sec) + "; " + String.valueOf(ms));
             }
         };
-        scheduler.scheduleAtFixedRate(runnable, 0, 100, MILLISECONDS);
+        scheduler.scheduleAtFixedRate(runnable, 0, 10, MILLISECONDS);
     }
 
     private void HandleImageClicked(JLabel button, int i) {
@@ -873,11 +865,35 @@ public class GameWindow extends javax.swing.JFrame {
 
     private void Win() {
         scheduler.shutdown();
+        if (!scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
+        NameInput dialog = new NameInput(this, true);
+        dialog.setVisible(true);
+        name = dialog.getInputName();
+
+        String sqlQuery = "insert into times (playerName,theme,time) values ('" + name + "'," + theme + "," + finalTime + ")";
+        try (Statement s = connection.createStatement()) {
+            int result = s.executeUpdate(sqlQuery);
+            if (result == 0) {
+                JOptionPane.showConfirmDialog(null,
+                        "The attempt to write your time to the leaderboard failed!", "Failure!", JOptionPane.DEFAULT_OPTION);
+            } else if (result == 1) {
+                JOptionPane.showConfirmDialog(null,
+                        "Successfully wrote your time to the leaderboard!", "Success!", JOptionPane.DEFAULT_OPTION);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        ResetEverything();
     }
 
     private void ResetAllImages() {
         for (int i = 0; i < labels.size(); i++) {
             labels.get(i).setIcon(new ImageIcon(getClass().getResource("q1.png")));
+            if (!labels.get(i).isEnabled()) {
+                labels.get(i).setEnabled(true);
+            }
         }
     }
 
@@ -894,154 +910,226 @@ public class GameWindow extends javax.swing.JFrame {
     }
 
     private void button2MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button2MousePressed
-        HandleImageClicked(button2, 2);
+        if (button2.isEnabled()) {
+            HandleImageClicked(button2, 2);
+        }
     }//GEN-LAST:event_button2MousePressed
 
     private void button1MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button1MousePressed
-        HandleImageClicked(button1, 1);
+        if (button1.isEnabled()) {
+            HandleImageClicked(button1, 1);
+        }
     }//GEN-LAST:event_button1MousePressed
 
     private void button3MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button3MousePressed
-        HandleImageClicked(button3, 3);
+        if (button3.isEnabled()) {
+            HandleImageClicked(button3, 3);
+        }
     }//GEN-LAST:event_button3MousePressed
 
     private void button4MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button4MousePressed
-        HandleImageClicked(button4, 4);
+        if (button4.isEnabled()) {
+            HandleImageClicked(button4, 4);
+        }
     }//GEN-LAST:event_button4MousePressed
 
     private void button5MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button5MousePressed
-        HandleImageClicked(button5, 5);
+        if (button5.isEnabled()) {
+            HandleImageClicked(button5, 5);
+        }
     }//GEN-LAST:event_button5MousePressed
 
     private void button6MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button6MousePressed
-        HandleImageClicked(button6, 6);
+        if (button6.isEnabled()) {
+            HandleImageClicked(button6, 6);
+        }
     }//GEN-LAST:event_button6MousePressed
 
     private void button7MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button7MousePressed
-        HandleImageClicked(button7, 7);
+        if (button7.isEnabled()) {
+            HandleImageClicked(button7, 7);
+        }
     }//GEN-LAST:event_button7MousePressed
 
     private void button8MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button8MousePressed
-        HandleImageClicked(button8, 8);
+        if (button8.isEnabled()) {
+            HandleImageClicked(button8, 8);
+        }
     }//GEN-LAST:event_button8MousePressed
 
     private void button9MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button9MousePressed
-        HandleImageClicked(button9, 9);
+        if (button9.isEnabled()) {
+            HandleImageClicked(button9, 9);
+        }
     }//GEN-LAST:event_button9MousePressed
 
     private void button10MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button10MousePressed
-        HandleImageClicked(button10, 10);
+        if (button10.isEnabled()) {
+            HandleImageClicked(button10, 10);
+        }
     }//GEN-LAST:event_button10MousePressed
 
     private void button11MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button11MousePressed
-        HandleImageClicked(button11, 11);
+        if (button11.isEnabled()) {
+            HandleImageClicked(button11, 11);
+        }
     }//GEN-LAST:event_button11MousePressed
 
     private void button12MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button12MousePressed
-        HandleImageClicked(button12, 12);
+        if (button12.isEnabled()) {
+            HandleImageClicked(button12, 12);
+        }
     }//GEN-LAST:event_button12MousePressed
 
     private void button13MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button13MousePressed
-        HandleImageClicked(button13, 13);
+        if (button13.isEnabled()) {
+            HandleImageClicked(button13, 13);
+        }
     }//GEN-LAST:event_button13MousePressed
 
     private void button14MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button14MousePressed
-        HandleImageClicked(button14, 14);
+        if (button14.isEnabled()) {
+            HandleImageClicked(button14, 14);
+        }
     }//GEN-LAST:event_button14MousePressed
 
     private void button15MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button15MousePressed
-        HandleImageClicked(button15, 15);
+        if (button15.isEnabled()) {
+            HandleImageClicked(button15, 15);
+        }
     }//GEN-LAST:event_button15MousePressed
 
     private void button16MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button16MousePressed
-        HandleImageClicked(button16, 16);
+        if (button16.isEnabled()) {
+            HandleImageClicked(button16, 16);
+        }
     }//GEN-LAST:event_button16MousePressed
 
     private void button17MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button17MousePressed
-        HandleImageClicked(button17, 17);
+        if (button17.isEnabled()) {
+            HandleImageClicked(button17, 17);
+        }
     }//GEN-LAST:event_button17MousePressed
 
     private void button18MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button18MousePressed
-        HandleImageClicked(button18, 18);
+        if (button18.isEnabled()) {
+            HandleImageClicked(button18, 18);
+        }
     }//GEN-LAST:event_button18MousePressed
 
     private void button19MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button19MousePressed
-        HandleImageClicked(button19, 19);
+        if (button19.isEnabled()) {
+            HandleImageClicked(button19, 19);
+        }
     }//GEN-LAST:event_button19MousePressed
 
     private void button20MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button20MousePressed
-        HandleImageClicked(button20, 20);
+        if (button20.isEnabled()) {
+            HandleImageClicked(button20, 20);
+        }
     }//GEN-LAST:event_button20MousePressed
 
     private void button21MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button21MousePressed
-        HandleImageClicked(button21, 21);
+        if (button21.isEnabled()) {
+            HandleImageClicked(button21, 21);
+        }
     }//GEN-LAST:event_button21MousePressed
 
     private void button22MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button22MousePressed
-        HandleImageClicked(button22, 22);
+        if (button22.isEnabled()) {
+            HandleImageClicked(button22, 22);
+        }
     }//GEN-LAST:event_button22MousePressed
 
     private void button23MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button23MousePressed
-        HandleImageClicked(button23, 23);
+        if (button23.isEnabled()) {
+            HandleImageClicked(button23, 23);
+        }
     }//GEN-LAST:event_button23MousePressed
 
     private void button24MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button24MousePressed
-        HandleImageClicked(button24, 24);
+        if (button24.isEnabled()) {
+            HandleImageClicked(button24, 24);
+        }
     }//GEN-LAST:event_button24MousePressed
 
     private void button25MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button25MousePressed
-        HandleImageClicked(button25, 25);
+        if (button25.isEnabled()) {
+            HandleImageClicked(button25, 25);
+        }
     }//GEN-LAST:event_button25MousePressed
 
     private void button26MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button26MousePressed
-        HandleImageClicked(button26, 26);
+        if (button26.isEnabled()) {
+            HandleImageClicked(button26, 26);
+        }
     }//GEN-LAST:event_button26MousePressed
 
     private void button27MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button27MousePressed
-        HandleImageClicked(button27, 27);
+        if (button27.isEnabled()) {
+            HandleImageClicked(button27, 27);
+        }
     }//GEN-LAST:event_button27MousePressed
 
     private void button28MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button28MousePressed
-        HandleImageClicked(button28, 28);
+        if (button28.isEnabled()) {
+            HandleImageClicked(button28, 28);
+        }
     }//GEN-LAST:event_button28MousePressed
 
     private void button29MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button29MousePressed
-        HandleImageClicked(button29, 29);
+        if (button29.isEnabled()) {
+            HandleImageClicked(button29, 29);
+        }
     }//GEN-LAST:event_button29MousePressed
 
     private void button30MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button30MousePressed
-        HandleImageClicked(button30, 30);
+        if (button30.isEnabled()) {
+            HandleImageClicked(button30, 30);
+        }
     }//GEN-LAST:event_button30MousePressed
 
     private void button31MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button31MousePressed
-        HandleImageClicked(button31, 31);
+        if (button31.isEnabled()) {
+            HandleImageClicked(button31, 31);
+        }
     }//GEN-LAST:event_button31MousePressed
 
     private void button32MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button32MousePressed
-        HandleImageClicked(button32, 32);
+        if (button32.isEnabled()) {
+            HandleImageClicked(button32, 32);
+        }
     }//GEN-LAST:event_button32MousePressed
 
     private void button33MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button33MousePressed
-        HandleImageClicked(button33, 33);
+        if (button33.isEnabled()) {
+            HandleImageClicked(button33, 33);
+        }
     }//GEN-LAST:event_button33MousePressed
 
     private void button34MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button34MousePressed
-        HandleImageClicked(button34, 34);
+        if (button34.isEnabled()) {
+            HandleImageClicked(button34, 34);
+        }
     }//GEN-LAST:event_button34MousePressed
 
     private void button35MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button35MousePressed
-        HandleImageClicked(button35, 35);
+        if (button35.isEnabled()) {
+            HandleImageClicked(button35, 35);
+        }
     }//GEN-LAST:event_button35MousePressed
 
     private void button36MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button36MousePressed
-        HandleImageClicked(button36, 36);
+        if (button36.isEnabled()) {
+            HandleImageClicked(button36, 36);
+        }
     }//GEN-LAST:event_button36MousePressed
 
     private void ChangeThemeItemMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_ChangeThemeItemMousePressed
         if (!scheduler.isShutdown()) {
             scheduler.shutdown();
         }
-        NewJDialog dialog = new NewJDialog(this, true);
+        ThemePicker dialog = new ThemePicker(this, true);
         dialog.setVisible(true);
         theme = dialog.getTheme();
         ResetEverything();
@@ -1055,7 +1143,12 @@ public class GameWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_ResetItemMousePressed
 
     private void LeaderboardItemMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_LeaderboardItemMousePressed
-
+        if (!scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
+        Leaderboard dialog = new Leaderboard(this, true);
+        dialog.setVisible(true);
+        ResetEverything();
     }//GEN-LAST:event_LeaderboardItemMousePressed
 
     public static void main(String args[]) {
@@ -1074,6 +1167,16 @@ public class GameWindow extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(GameWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(GameWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+
+        //try to connect to the database
+        try {
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/memgameleaderboard", "root", "root");
+            if (connection != null) {
+                System.out.println("Connected to database!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         java.awt.EventQueue.invokeLater(new Runnable() {
