@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package memorygame_desktopedition;
 
-import java.awt.Font;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -15,10 +9,6 @@ import javax.swing.table.DefaultTableModel;
 import static memorygame_desktopedition.GameWindow.connection;
 import static memorygame_desktopedition.GameWindow.theme;
 
-/**
- *
- * @author justw
- */
 public class Leaderboard extends javax.swing.JDialog {
 
     int thisTheme = theme;
@@ -31,59 +21,25 @@ public class Leaderboard extends javax.swing.JDialog {
         SetDropDown();
     }
 
+    //set the drop down to be whatever theme is selected in game. if you played on animals theme, set the dropdown to have animals
     private void SetDropDown() {
         themeDropDown.setSelectedIndex(theme - 1);
     }
 
-    private String getThemeString(int t) {
-        switch (t) {
-            case 1:
-                return "Animals";
-            case 2:
-                return "Save Earth";
-            case 3:
-                return "Food";
-            case 4:
-                return "Medieval";
-            case 5:
-                return "Programming";
-            case 6:
-                return "Sea";
-        }
-        return "Animals";
-    }
-
-    private int getThemeInt(String s) {
-        switch (s) {
-            case "Animals":
-                return 1;
-            case "Save Earth":
-                return 2;
-            case "Food":
-                return 3;
-            case "Medieval":
-                return 4;
-            case "Programming":
-                return 5;
-            case "Sea":
-                return 6;
-        }
-        return 1;
-    }
-
+    //get the model for the table and make sure it's row count is 0.
+    //get everything from the times table, and set the playerName and time in arr, then show that data in the table.
     private void GetResults() {
         DefaultTableModel model = (DefaultTableModel) timesTable.getModel();
         model.setRowCount(0);
         //int thm = getThemeString(thisTheme);
         String sqlQuery = "";
-        Object arr[] = new Object[3];
-        sqlQuery = "select * from times where theme='" + thisTheme + "' order by time asc";
-        try (Statement s0 = connection.createStatement()) {
+        Object arr[] = new Object[2];
+        sqlQuery = "select playerName, time from Times where theme=" + thisTheme + " order by time asc";
+        try ( Statement s0 = connection.createStatement()) {
             ResultSet rs0 = s0.executeQuery(sqlQuery);
             while (rs0.next()) {
                 arr[0] = rs0.getString("playerName");
-                arr[1] = getThemeString(rs0.getInt("theme"));
-                arr[2] = rs0.getString("time");
+                arr[1] = rs0.getString("time");
                 FillTimesTable(arr);
             }
         } catch (SQLException e) {
@@ -91,11 +47,13 @@ public class Leaderboard extends javax.swing.JDialog {
         }
     }
 
+    //add the data to the timesTable
     private void FillTimesTable(Object arr[]) {
         DefaultTableModel model = (DefaultTableModel) timesTable.getModel();
         model.addRow(arr);
     }
 
+    //center the data in the table.
     private void FormatTables() {
         DefaultTableCellRenderer columnRenderer = new DefaultTableCellRenderer();
         DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
@@ -104,7 +62,6 @@ public class Leaderboard extends javax.swing.JDialog {
         headerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         timesTable.getColumnModel().getColumn(0).setCellRenderer(columnRenderer);
         timesTable.getColumnModel().getColumn(1).setCellRenderer(columnRenderer);
-        timesTable.getColumnModel().getColumn(2).setCellRenderer(columnRenderer);
     }
 
     /**
@@ -134,17 +91,18 @@ public class Leaderboard extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Player Name", "Theme", "Time"
+                "Player Name", "Time"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.Integer.class
+                java.lang.String.class, java.lang.Integer.class
             };
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
         });
+        timesTable.setEnabled(false);
         jScrollPane1.setViewportView(timesTable);
 
         themeDropDown.setFont(new java.awt.Font("Agency FB", 0, 18)); // NOI18N
@@ -184,6 +142,7 @@ public class Leaderboard extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    //the user selected a different theme, so change the output to reflect only times with that theme.
     private void themeDropDownItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_themeDropDownItemStateChanged
         thisTheme = themeDropDown.getSelectedIndex() + 1;
         GetResults();
@@ -200,7 +159,7 @@ public class Leaderboard extends javax.swing.JDialog {
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
+                if ("Windows".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }

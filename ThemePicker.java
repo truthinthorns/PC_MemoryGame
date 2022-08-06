@@ -199,6 +199,7 @@ public class ThemePicker extends javax.swing.JDialog {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
+    //set the theme to be which ever theme corresponds the button the user pressed.
     private void animalButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_animalButtonMousePressed
         theme = 1;
         this.dispose();

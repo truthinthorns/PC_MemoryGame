@@ -12,7 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
 
 public class GameWindow extends javax.swing.JFrame {
 
@@ -25,7 +24,6 @@ public class GameWindow extends javax.swing.JFrame {
     JLabel second = null;
     HashMap<Integer, String> images = new HashMap<>();
     HashMap<Integer, Boolean> bools = new HashMap<>();
-    ArrayList<Integer> correct = new ArrayList<>();
     ArrayList<JLabel> labels = new ArrayList<>();
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     long finalTime = 0L;
@@ -33,7 +31,6 @@ public class GameWindow extends javax.swing.JFrame {
 
     public GameWindow() {
         initComponents();
-        InitializeBools();
         InitializeLabels();
         ShuffleImages();
     }
@@ -555,12 +552,7 @@ public class GameWindow extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void InitializeBools() {
-        for (int i = 0; i < 36; i++) {
-            bools.put(i + 1, false);
-        }
-    }
-
+    //seems weird to add buttons to labels, but I had to make the slots Label components instead of actual buttons. I think the reason was because I couldn't add an image (easily) to the Button component. The variables called buttonx are actual Label components.
     private void InitializeLabels() {
         labels.add(button1);
         labels.add(button2);
@@ -600,6 +592,7 @@ public class GameWindow extends javax.swing.JFrame {
         labels.add(button36);
     }
 
+    //should be pretty self-explanatory. If the theme is x, add the correspoding 18 images to the img arrayList and shuffle it. then, shuffle a list of 36 numbers, and add the images and numbers to the images arrayList. In other words, it simulates if you had 36 cards, and you shuffled them around , then arranged them.
     private void ShuffleImages() {
         ArrayList<String> img = new ArrayList<>();
         switch (theme) {
@@ -776,35 +769,30 @@ public class GameWindow extends javax.swing.JFrame {
         images.put(ints.get(35), img.get(17));
     }
 
+    //check if the two images are the same
     private boolean CheckIfSame() {
         return first.getIcon().toString().equals(second.getIcon().toString());
     }
 
+    //if the player clicked two of the same image:
+    //disable the labels
+    //reset shown and increment score (variable and label)
+    //check if that won the game (18 points/score==18)
     private void HandleSameClicked() {
         first.setEnabled(false);
         second.setEnabled(false);
         first = null;
         second = null;
-        for (int i = 1; i < bools.size() + 1; i++) {
-            if (bools.get(i) == true) {
-                correct.add(i - 1);
-                bools.put(i, false);
-            }
-        }
         shown = 0;
         score++;
         ScoreLabel.setText("Score: " + score);
-        if (score == 4) {
+        if (score == 1) {
             Win();
         }
     }
 
+    //if the two cards don't have the same image, then "turn them back over" after .8 of a second.
     private void HandleDiffClicked() {
-        for (int i = 1; i < bools.size() + 1; i++) {
-            if (bools.get(i) == true) {
-                bools.put(i, false);
-            }
-        }
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -818,11 +806,13 @@ public class GameWindow extends javax.swing.JFrame {
         }, 800);
     }
 
+    //reset the image on the label to the question mark image
     private void ResetShownButtons() {
         first.setIcon(new ImageIcon(getClass().getResource("q1.png")));
         second.setIcon(new ImageIcon(getClass().getResource("q1.png")));
     }
 
+    //set a timer that is shown at the top of the game screen that shows minutes, seconds, milliseconds (3 decimal places)
     private void StartGameTimer() {
         final long begin = System.currentTimeMillis();
         final Runnable runnable = new Runnable() {
@@ -839,6 +829,10 @@ public class GameWindow extends javax.swing.JFrame {
         scheduler.scheduleAtFixedRate(runnable, 0, 10, MILLISECONDS);
     }
 
+    //start the game when an image is clicked.
+    //if it's the first tap, assign first to whichever one was tapped. if it's the second tap, do the same for second.
+    //then set the image shown to be its corresponding image
+    //increment shown and if it equals 2, check if they're the same and call the correct function based on that condition.
     private void HandleImageClicked(JLabel button, int i) {
         if (start) {
             StartGameTimer();
@@ -851,7 +845,7 @@ public class GameWindow extends javax.swing.JFrame {
                 second = button;
             }
             button.setIcon(new ImageIcon(getClass().getResource(images.get(i))));
-            bools.put(i, true);
+            //bools.put(i, true);
             shown++;
             if (shown == 2) {
                 if (CheckIfSame()) {
@@ -863,6 +857,9 @@ public class GameWindow extends javax.swing.JFrame {
         }
     }
 
+    //stop the timer from running
+    //show a popup for the user to input their name for the leaderboard, then insert the name, time, and theme into a database.
+    //reset everything after.
     private void Win() {
         scheduler.shutdown();
         if (!scheduler.isShutdown()) {
@@ -873,7 +870,7 @@ public class GameWindow extends javax.swing.JFrame {
         name = dialog.getInputName();
 
         String sqlQuery = "insert into times (playerName,theme,time) values ('" + name + "'," + theme + "," + finalTime + ")";
-        try (Statement s = connection.createStatement()) {
+        try ( Statement s = connection.createStatement()) {
             int result = s.executeUpdate(sqlQuery);
             if (result == 0) {
                 JOptionPane.showConfirmDialog(null,
@@ -888,6 +885,7 @@ public class GameWindow extends javax.swing.JFrame {
         ResetEverything();
     }
 
+    //reset all labels to have the question mark image, and enable all of them.
     private void ResetAllImages() {
         for (int i = 0; i < labels.size(); i++) {
             labels.get(i).setIcon(new ImageIcon(getClass().getResource("q1.png")));
@@ -897,18 +895,18 @@ public class GameWindow extends javax.swing.JFrame {
         }
     }
 
+    //reset the variables here, and call functions to re-initialize everything.
     private void ResetEverything() {
         score = 0;
         ScoreLabel.setText("Score: 0");
         TimeLabel.setText("Time: 00;00;0");
         scheduler = Executors.newScheduledThreadPool(1);
         start = true;
-        correct.clear();
-        InitializeBools();
         ShuffleImages();
         ResetAllImages();
     }
 
+    //from here down to the next comment, just call HandleImageClicked(), passing in the button that was clicked and its associated index number.
     private void button2MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_button2MousePressed
         if (button2.isEnabled()) {
             HandleImageClicked(button2, 2);
@@ -1125,6 +1123,7 @@ public class GameWindow extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_button36MousePressed
 
+    //stop the timer, then show the popup for the user to pick a new theme, then reset everything.
     private void ChangeThemeItemMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_ChangeThemeItemMousePressed
         if (!scheduler.isShutdown()) {
             scheduler.shutdown();
@@ -1135,6 +1134,7 @@ public class GameWindow extends javax.swing.JFrame {
         ResetEverything();
     }//GEN-LAST:event_ChangeThemeItemMousePressed
 
+    //stop the timer and reset everything.
     private void ResetItemMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_ResetItemMousePressed
         if (!scheduler.isShutdown()) {
             scheduler.shutdown();
@@ -1142,6 +1142,7 @@ public class GameWindow extends javax.swing.JFrame {
         ResetEverything();
     }//GEN-LAST:event_ResetItemMousePressed
 
+    //stop the timer and show the popup for the leaderboard.
     private void LeaderboardItemMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_LeaderboardItemMousePressed
         if (!scheduler.isShutdown()) {
             scheduler.shutdown();
@@ -1171,7 +1172,7 @@ public class GameWindow extends javax.swing.JFrame {
 
         //try to connect to the database
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/memgameleaderboard", "root", "root");
+            connection = DriverManager.getConnection("jdbc:derby://localhost:1527/memGameDB", "root", "root");
             if (connection != null) {
                 System.out.println("Connected to database!");
             }
